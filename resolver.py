@@ -17,20 +17,29 @@ if __name__ == "__main__":
     try:
         ip_resolver = IPResolver(args.i)
 
-    except WrongIFNameExcpetion, NoIPAddressINFException as e:
+    except WrongIFNameExcpetion as e:
+        print(e)
+        sys.exit(e.code)
+
+    except NoIPAddressINFException as e:
         print(e)
         sys.exit(e.code)
 
     while cnt < args.n and not target_ip:
         try:
             target_ip = ip_resolver.resolve_ip(args.target)
-            cnt += 1
 
         except InvalidMACFormatException as e:
             print(e)
-            sys.exit(code)
+            sys.exit(e.code)
 
         except IPAddressNotFoundException as e:
-            print(e + "retry...[{CNT}/{MAX}]".format(CNT=cnt, MAX=args.n))
+            print(str(e) + "retry...[{CNT}/{MAX}]".format(CNT=cnt+1, MAX=args.n))
 
-    print("Find IP : {IP} from {MAC}".format(IP=target_ip, MAC=args.target))
+        finally:
+            cnt += 1
+
+    if not target_ip:
+        print("Fail to resolve IP address from {MAC}".format(MAC=args.target))
+    else:
+        print("Find IP : {IP} from {MAC}".format(IP=target_ip, MAC=args.target))

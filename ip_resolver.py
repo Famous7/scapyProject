@@ -11,7 +11,7 @@ class IPResolver:
 
     SEND_INTERVAL = 0.025
     RECEIVE_TIMEOUT = SEND_INTERVAL * 510
-    MAC_RE = re.compile("^([0-9A-F]{2}[:-]){5}([0-9A-F]{2})$")
+    MAC_RE = re.compile("^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$")
 
     def __init__(self, iface):
         self.iface = iface
@@ -20,12 +20,8 @@ class IPResolver:
         self.my_mac = self.get_mac()
         self.my_ip_network = self.get_ip_cidr()
 
-        self.sender_thread = threading.Thread(target=self.send)
-        self.sender_thread.daemon = True
-
-        self.receive_thread = threading.Thread(target=self.receive)
-        self.receive_thread.daemon = True
-
+        self.receive_thread = None
+        self.sender_thread = None
 
     @property
     def iface(self):
@@ -50,10 +46,16 @@ class IPResolver:
         self.__target_mac = mac
 
     def resolve_ip(self, target_mac):
-        if not MAC_RE.match(target_mac):
+        if not self.MAC_RE.match(target_mac):
             raise InvalidMACFormatException(target_mac)
 
         self.target_mac = target_mac
+
+        self.sender_thread = threading.Thread(target=self.send)
+        self.sender_thread.daemon = True
+
+        self.receive_thread = threading.Thread(target=self.receive)
+        self.receive_thread.daemon = True
 
         self.receive_thread.start()
         self.sender_thread.start()
@@ -71,7 +73,7 @@ class IPResolver:
     def get_ip_cidr(self):
         ip = ni.ifaddresses(self.iface)[ni.AF_INET][0]['addr']
         netmask = ni.ifaddresses(self.iface)[ni.AF_INET][0]['netmask']
-        return netaddr.IPNetwork('{IP}{MASK}'.foramt(IP=ip, MASK=netmask))
+        return netaddr.IPNetwork('{IP}/{MASK}'.format(IP=ip, MASK=netmask))
 
     def receive(self):
         filter_str = "ether src " + self.target_mac + " and ether dst " + self.my_mac + " and arp"
@@ -94,4 +96,4 @@ class IPResolver:
             for ip in ip_set:
                 packet.pdst = str(ip)
                 sendp(packet, iface=self.iface, verbose=False)
-                sleep(self.WAIT_TIME)
+                sleep(self.SEND_INTERVAL)

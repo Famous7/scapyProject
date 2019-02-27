@@ -7,6 +7,7 @@ class WrongIFNameExcpetion(Exception):
     def __str__(self):
         return self.msg
 
+
 class IPAddressNotFoundException(Exception):
     def __init__(self, mac_addr, network):
         self.msg = "No IP address for {MAC} in {NET}".format(MAC=mac_addr, NET=network)
@@ -17,6 +18,7 @@ class IPAddressNotFoundException(Exception):
     def __str__(self):
         return self.msg
 
+
 class NoIPAddressINFException(Exception):
     def __init__(self, iface):
         self.msg = "Interface [{INF}] has no IP address".format(INF=iface)
@@ -26,9 +28,10 @@ class NoIPAddressINFException(Exception):
     def __str__(self):
         return self.msg
 
+
 class InvalidMACFormatException(Exception):
     def __init__(self, mac):
-        self.msg = "Invalid MAC address format : {MAC}".format(mac)
+        self.msg = "Invalid MAC address format : {MAC}".format(MAC=mac)
         self.mac = mac
         self.code = -20
 
